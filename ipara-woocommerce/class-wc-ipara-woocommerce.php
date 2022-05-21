@@ -10,6 +10,7 @@
  * Domain Path: /i18n/languages/
  * WC requires at least: 3.0.0
  * WC tested up to: 4.4.1
+ * Modül kodları ahmethamdibayrak@hotmail.com tarafından yeniden düzenlendi ve değitirildi
  */
 define('IPARA_PATH', untrailingslashit(plugin_dir_path(__FILE__)));
 define('IPARA_PLUGIN', '/' . plugin_basename(dirname(__FILE__)));
