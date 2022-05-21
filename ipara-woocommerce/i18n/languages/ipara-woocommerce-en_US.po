@@ -1,0 +1,121 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.2.3\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: en_US\n"
+
+# This file is distributed under the GNU General Public License v2 or later.
+
+
+
+msgid "Enable/Disable"
+msgstr "Enable/Disable"
+
+msgid "Title"
+msgstr "Title"
+
+msgid "This message will show to the user during checkout."
+msgstr "This message will show to the user during checkout."
+
+msgid "Description"
+msgstr "Description"
+
+msgid "Installment"
+msgstr "Installment"
+
+msgid "Payment Mode."
+msgstr "Payment Mode."
+
+msgid "Test."
+msgstr "Test."
+
+msgid "Live."
+msgstr "Live."
+
+msgid "Installment Fee"
+msgstr "Installment Fee"
+
+msgid "Pay with your credit card via ipara."
+msgstr "Online payment by card."
+
+msgid "Payment successful."
+msgstr "Payment successful."
+
+msgid "Error"
+msgstr "Error"
+
+
+msgid "Enable ipara Payment"
+msgstr "Enable ipara Payment"
+
+msgid "Description."
+msgstr "Description."
+
+msgid "Checkout Button."
+msgstr "Checkout Button."
+
+msgid "Pay With Credit Card."
+msgstr "Pay With Credit Card."
+
+msgid "ipara public key."
+msgstr "ipara public key."
+
+msgid "public key Given by ipara System"
+msgstr "public key Given by ipara System"
+
+msgid "ipara secret key."
+msgstr "ipara secret key."
+
+msgid "secret key Given by ipara System."
+msgstr "secret key Given by ipara System."
+
+msgid "Installments Options."
+msgstr "Installments Options."
+
+msgid "OFF"
+msgstr "OFF"
+
+msgid "ON"
+msgstr "ON"
+
+msgid "Credit Cart Form"
+msgstr "Credit Cart Form"
+
+msgid "Payment ID"
+msgstr "Payment ID"
+
+msgid "ThreeD Mode."
+msgstr "ThreeD Mode."
+
+
+msgid "3D Payment."
+msgstr "3D Payment."
+
+msgid "Non 3D Payment."
+msgstr "Non 3D Payment."
+
+msgid "Name on Card"
+msgstr "Name on Card"
+
+msgid "Card Number"
+msgstr "Card Number"
+
+msgid "MM/YY"
+msgstr "MM/YY"
+
+msgid "All Installment"
+msgstr "All Installment"
+
+msgid "Pay"
+msgstr "Pay"
+
+msgid "Payment Form"
+msgstr "Payment Form"

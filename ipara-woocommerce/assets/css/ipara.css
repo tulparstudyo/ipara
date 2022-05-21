@@ -1,0 +1,23 @@
+#ipara-form{
+    margin: auto;
+    text-align: center;
+}
+form span.cc-label {
+    width: 100%;
+    display: block;
+    margin-top: 10px;
+}
+.card-container{
+    width: 400px;
+}
+.card-container .input-text{
+    width: 100%;
+    text-align: center;
+}
+.card-container .input-text.c-date, .card-container .input-text.card-cvc{
+    max-width: 50%;
+    min-width: 200px;
+}
+.taksit-title img{
+    max-width: 100px;
+}
