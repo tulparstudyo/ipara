@@ -62,4 +62,8 @@ jQuery(document).ready( function($) {
             }
         });
     }
+
+
+    // We can also pass the url value separately from ajaxurl for front end AJAX implementations
+
 });

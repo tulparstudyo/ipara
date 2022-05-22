@@ -10,7 +10,6 @@
  * Domain Path: /i18n/languages/
  * WC requires at least: 3.0.0
  * WC tested up to: 4.4.1
- * Modül kodları ahmethamdibayrak@hotmail.com tarafından yeniden düzenlendi ve değitirildi
  */
 define('IPARA_PATH', untrailingslashit(plugin_dir_path(__FILE__)));
 define('IPARA_PLUGIN', '/' . plugin_basename(dirname(__FILE__)));
@@ -256,7 +255,7 @@ function woocommerce_ipara_payment_init()
             $info['is_available'] = false;
             if(isset($info['result']) && $info['result']=='1'){
                 $order_id = $_POST['order_id'];
-                $instalment_order = $this->instalment_option_for_order($order_id, $info['cardFamilyName']);
+                $instalment_order = $this->instalment_option_for_order($order_id, $request->binNumber );
                 $info['is_available'] = $instalment_order['is_available'];
                 $info['table'] = $instalment_order['table'];
             }
@@ -365,12 +364,22 @@ function woocommerce_ipara_payment_init()
             $installement = isset($_POST['taksitsayisi'])?$_POST['taksitsayisi']:1;
             $bank = isset($_POST['bank'])?$_POST['bank']:1;
 
+            $expiry = explode("/", $expiry);
+            $expiryMM = $expiry[0];
+            $expiryYY = $expiry[1];
+            $expiryMM = wc_clean($expiryMM);
+            $expiryYY = wc_clean($expiryYY);
+            setFlash('card-name', $name);
+            setFlash('number', $number);
+            $number = replaceSpaceIparaCard(wc_clean($number));
+
             $error_message = false;
-            if($bank && $installement>1){
+            if($number && $installement>1){
+                $binnumber = substr($number.'000000',0, 6);;
                 $rates = KahvedigitalIpara::calculatePrices($order->get_total(), $this->rates);
-                if(isset($rates[$bank]) && isset($rates[$bank]['installments'])){
-                    if(isset($rates[$bank]['installments'][$installement])){
-                        if($total < $rates[$bank]['installments'][$installement]['total']){
+                if(isset($rates[$binnumber]) && isset($rates[$binnumber]['installments'])){
+                    if(isset($rates[$binnumber]['installments'][$installement])){
+                        if($total < $rates[$binnumber]['installments'][$installement]['total']){
                             $error_message = 'Taksitli Tutar Hatası: Taksit sayısı ile taksit tutarı eşleşmedi.';
                         }
                     } else {
@@ -390,15 +399,6 @@ function woocommerce_ipara_payment_init()
                 setFlash('ipara_error_message', $error_message.' Lütfen tekrar deneyiniz ve sorun devam ederse bizimle iletişime geçiniz.');
                 return wp_redirect($redirectUrl);
             }
-
-            $expiry = explode("/", $expiry);
-            $expiryMM = $expiry[0];
-            $expiryYY = $expiry[1];
-            $expiryMM = wc_clean($expiryMM);
-            $expiryYY = wc_clean($expiryYY);
-            setFlash('card-name', $name);
-            setFlash('number', $number);
-            $number = replaceSpaceIparaCard(wc_clean($number));
 
             $paid = number_format($total, 2, '.', '');
             $paid = str_replace('.', '', $paid);
@@ -532,65 +532,42 @@ function woocommerce_ipara_payment_init()
 
         public function generateBasketItems($items, $order)
         {
-
             $itemSize = count($items);
-
             if (!$itemSize) {
-
                 return $this->calcProduct($order);
             }
-
             $keyNumber = 0;
-
             foreach ($items as $key => $item) {
-
                 $productId = $item['product_id'];
                 $product = wc_get_product($productId);
                 $realPrice = $this->realPrice($item['line_subtotal'], $product->get_price());
-
                 if ($realPrice && $realPrice != '0' && $realPrice != '0.0' && $realPrice != '0.00' && $realPrice != false) {
-
                     $basketItems[$keyNumber] = new Product();
-
                     $basketItems[$keyNumber]->Quantity = $item['quantity'];
                     $basketItems[$keyNumber]->Price = $this->priceParser($realPrice / $item['quantity']);
                     $basketItems[$keyNumber]->Title = $product->get_title();
                     $basketItems[$keyNumber]->Code = $product->get_title();
-
                     $keyNumber++;
-
                 }
-
             }
-
             $shipping = $order->get_total_shipping() + $order->get_shipping_tax();
-
             if ($shipping && $shipping != '0' && $shipping != '0.0' && $shipping != '0.00' && $shipping != false) {
-
                 $endKey = count($basketItems);
-
                 $basketItems[$endKey] = new Product();
-
                 $basketItems[$endKey]->Quantity = 1;
                 $basketItems[$endKey]->Price = $this->priceParser($shipping);
                 $basketItems[$endKey]->Title = 'Cargo';
                 $basketItems[$endKey]->Code = $product->get_title();
 
             }
-
             return $basketItems;
-
         }
         public function realPrice($salePrice, $regularPrice)
         {
-
             if (empty($salePrice)) {
-
                 $salePrice = $regularPrice;
             }
-
             return $salePrice;
-
         }
         public function priceParser($price)
         {
@@ -606,9 +583,7 @@ function woocommerce_ipara_payment_init()
         {
 
             $keyNumber = 0;
-
             $basketItems[$keyNumber] = new stdClass();
-
             $basketItems[$keyNumber]->Quantity = $item['quantity'] ?? 1;
             $basketItems[$keyNumber]->Price = $this->priceParser($order->get_total());
             $basketItems[$keyNumber]->Title = 'Woocommerce - Custom Order Page';
@@ -616,7 +591,7 @@ function woocommerce_ipara_payment_init()
 
             return $basketItems;
         }
-        function instalment_option_for_order($orderid, $bank){
+        function instalment_option_for_order($orderid, $binnumber){
             $result = [
                 'is_available' => 0,
                 'table' => '',
@@ -631,44 +606,46 @@ function woocommerce_ipara_payment_init()
             $currency = $order->get_currency();
             $installments_mode = $this->settings['ipara_settings_installement'];
 
-            if(!isset($rates[$bank])){
-                $bank = strtolower($bank);
-            }
-
             $result['table'] = "Taksit Özelliği Devre Dışı";
             if($installments_mode=='on'){
                 $result['table'] = "Taksit Tanımlanmamış";
-                if(isset($rates[$bank]) && $rates[$bank]['installments']){
-                    $result['is_available'] = 1;
-                    $result['table'] = '<div class="ipara-container instalment-options">';
-                    $result['table'] .= '<span class="cc-label"></span>';
-                    $result['table'] .= '<input type="hidden" name="bank" value="'.$bank.'"></input>';
-                    $result['table'] .= '<select name="taksitsayisi" class="taksit" >';
-                    $showtotal = '';
-                    $paytotal = '';
-                    foreach($rates[$bank]['installments'] as $ins=>$installment){
+                if(isset($rates[$binnumber]) ){
+                    if($rates[$binnumber]['installments']){
+                        $result['is_available'] = 1;
+                        $result['table'] = '<div class="ipara-container instalment-options">';
+                        $result['table'] .= '<span class="cc-label"></span>';
+                        $result['table'] .= '<input type="hidden" name="bank" value="'.$binnumber.'"></input>';
+                        $result['table'] .= '<select name="taksitsayisi" class="taksit" >';
+                        $showtotal = '';
+                        $paytotal = '';
+                        foreach($rates[$binnumber]['installments'] as $ins=>$installment){
+                            if(!$installment['active']) continue;
+                            if($ins=='1'){
+                                $paytotal = $installment['total'];
+                                $showtotal = wc_price($installment['total']);
+                                $selected = "checked";
+                                $installment_text = __('Tek çekim');
+                            } else{
+                                $selected = "";
+                                $installment_text = $ins.' '.__('Taksit', 'ipara-woocommerce');
+                            }
 
-                        if(!$installment['active']) continue;
-                        if($ins=='1'){
-                            $paytotal = $installment['total'];
-                            $showtotal = wc_price($installment['total']);
-                            $selected = "checked";
-                            $installment_text = __('Tek çekim');
-                        } else{
-                            $selected = "";
-                            $installment_text = $ins.' '.__('Taksit', 'ipara-woocommerce');
+                            $result['table'] .= '<option value="'.$ins.'" data-total="'.$installment['total'].'">'.$installment_text.' ('.$installment['total'].' / '. $installment['monthly'].')</option>';
                         }
+                        $card_logo = isset($cards[$binnumber])?$cards[$binnumber]['logo']:'/assets/img/'.$binnumber.'.svg';
 
-                        $result['table'] .= '<option value="'.$ins.'" data-total="'.$installment['total'].'">'.$installment_text.' ('.$installment['total'].' / '. $installment['monthly'].')</option>';
-                    }
-                    $card_logo = isset($cards[$bank])?$cards[$bank]['logo']:'/assets/img/'.$bank.'.svg';
-
-                    $result['table'] .= '</select>';
-                    $result['table'] .= '<span class="cc-label"></span>
+                        $result['table'] .= '</select>';
+                        $result['table'] .= '<span class="cc-label"></span>
 <button type="submit" name="iparatotal" value="'.$paytotal.'" class="iparaode taksit button alt iparaode" style=""><span class="showtotal">'.$showtotal.'</span> <span class="iparaOdemeText">'. __('Pay', 'ipara-woocommerce').'</span></button>';
-                    $result['table'] .= '<span class="cc-label"></span><div class="taksit-title "><img src="'.$card_logo.'"></div>';
-                    $result['table'] .= '<div style="text-align: center">'.$rates[$bank]['message'].'</div><span class="cc-label"></span>';
-                    $result['table'] .= '</div>';
+                        $result['table'] .= '<span class="cc-label"></span><div class="taksit-title "><img src="'.$card_logo.'"></div>';
+                        $result['table'] .= '<div style="text-align: center">'.$rates[$binnumber]['message'].'</div><span class="cc-label"></span>';
+                        $result['table'] .= '</div>';
+                    } else {
+                        $result['is_available'] = 2;
+                        if($rates[$binnumber]['message']){
+                            $result['table'] .= '<div style="text-align: center">'.$rates[$binnumber]['message'].'</div><span class="cc-label"></span>';
+                        }
+                    }
                 }
             }
             return $result;
@@ -685,6 +662,7 @@ function woocommerce_ipara_payment_init()
             $showtotal = $order->get_total();
             $currency = $order->get_currency();
             $installments_mode = $this->settings['ipara_settings_installement'];
+
             if (isset($_POST['order_id']) and $_POST['order_id'] == $orderid) {
                 $record = $this->iparaCheckOutRequest($orderid);
             } else {
@@ -695,7 +673,6 @@ function woocommerce_ipara_payment_init()
 
         public function check_ipara_response()
         {
-
             global $woocommerce;
             $orderIdFull = explode("-", $_POST['orderId']);
             $orderExplodeId = $orderIdFull[0];

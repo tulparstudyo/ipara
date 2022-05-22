@@ -75,7 +75,7 @@ class KahveDigitalIpara
                 $v['logo'] = '';
             }
             $return .= '<tr>'
-                . '<th text-align="left"><img src="'.$v['logo'].'" width="40px" alt="'.$v['name'].'" title="'.$v['name'].'"></th>';
+                . '<th text-align="left">'.$k.'<br><img src="'.$v['logo'].'" width="40px" alt="'.$v['name'].'" title="'.$v['name'].'"></th>';
             for ($i = 1; $i <= self::max_installment; $i++) {
                 if(!isset($rates[$k]) || !isset($rates[$k]['installments'][$i])){
                     $rates[$k]['installments'][$i]['active'] = 0;

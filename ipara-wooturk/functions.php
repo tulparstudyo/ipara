@@ -1,6 +1,30 @@
 <?php
 add_action('admin_menu', 'ipara_wooturk_add_menu');
 add_action( 'admin_enqueue_scripts', 'ipara_wooturk_load_wp_media_files' );
+add_action( 'admin_enqueue_scripts', 'ipara_wooturk_enqueue' );
+add_action( 'wp_ajax_ipara_wooturk_action', 'ipara_wooturk_action' );
+function ipara_wooturk_enqueue($hook) {
+    if( 'index.php' != $hook ) {
+        // Only applies to dashboard panel
+        return;
+    }
+
+    wp_enqueue_script( 'ajax-script', plugins_url( '/js/my_query.js', __FILE__ ), array('jquery') );
+
+    // in JavaScript, object properties are accessed as ajax_object.ajax_url, ajax_object.we_value
+    wp_localize_script( 'ajax-script', 'ajax_object',
+        array( 'ajax_url' => admin_url( 'admin-ajax.php' ), 'we_value' => 1234 ) );
+}
+// Same handler function...
+function ipara_wooturk_action() {
+    $BinNumber = substr($_POST['BinNumber'].'000000',0, 6);
+    $_POST['BinNumber'] = $BinNumber;
+
+    $ipara = new WC_Gateway_Ipara();
+    $ipara_bininfo = $ipara->ipara_bininfo();
+    $ipara_bininfo['BinNumber'] = $BinNumber;
+    echo wp_send_json($ipara_bininfo);
+}
 function ipara_wooturk_load_wp_media_files( $page ) {
     if($page=='settings_page_ipara_wooturk_options'){
         wp_enqueue_media();
@@ -44,8 +68,8 @@ function ipara_wooturk_settings_page(){
         }
         if(isset($_POST['new'])){
             foreach($_POST['new'] as $new){
-                $defined_bins[$new['code']] =[
-                    'code'=>$new['code'],
+                $defined_bins[$new['bincode']] =[
+                    'bincode'=>$new['bincode'],
                     'name'=>$new['name'],
                     'bank'=>$new['bank'],
                     'installments'=>$new['installments']
@@ -76,15 +100,12 @@ function ipara_wooturk_settings_page(){
 function get_defined_bins()
 {
     return array(
-        'axess' => array('name' => 'Axess', 'bank' => 'Akbank A.Ş.', 'installments' => true),
-        'world' => array('name' => 'WordCard', 'bank' => 'Yapı Kredi Bankası', 'installments' => true),
-        'bonus' => array('name' => 'BonusCard', 'bank' => 'Garanti Bankası A.Ş.', 'installments' => true),
-        'cardfinans' => array('name' => 'CardFinans', 'bank' => 'FinansBank A.Ş.', 'installments' => true),
-        'maximum' => array('name' => 'Maximum', 'bank' => 'T.C. İş Bankası', 'installments' => true),
-        'paraf' => array('name' => 'Paraf', 'bank' => 'Halk Bankası', 'installments' => true),
-        'combo' => array('name' => 'Kart Combo', 'bank' => 'Ziraat Bankası', 'installments' => true),
-        'kuveyt' => array('name' => 'Sağlam Kart', 'bank' => 'KuveytTürk', 'installments' => true),
-        // 'amex' => array('name' => 'Amex', 'bank' => 'Amerikan Express', 'installments' => true),
+        '557113' => array('name' => 'Axess', 'bank' => 'Akbank A.Ş.', 'installments' => true),
+        '402940' => array('name' => 'WordCard', 'bank' => 'Yapı Kredi Bankası', 'installments' => true),
+        '466280' => array('name' => 'BonusCard', 'bank' => 'Alternatif Bank', 'installments' => true),
+        '545616' => array('name' => 'CardFinans', 'bank' => 'FinansBank A.Ş.', 'installments' => true),
+        '450803' => array('name' => 'Maximum', 'bank' => 'T.C. İş Bankası', 'installments' => true),
+        '402590' => array('name' => 'Sağlam Kart', 'bank' => 'KuveytTürk', 'installments' => true),
     );
 }
 

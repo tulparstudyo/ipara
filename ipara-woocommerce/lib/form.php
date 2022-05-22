@@ -5,8 +5,7 @@ if (!defined('ABSPATH')) {
 $ipara_error_message = getFlash('ipara_error_message');
 $ipara_url = plugins_url('/', dirname(__FILE__));
 ?>
-<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
-<script src="<?php echo $ipara_url ?>/assets/js/card.js"></script>
+<script src="<?php echo $ipara_url ?>assets/js/card.js?_v=<?=time()?>"></script>
 <?php if ($error_message) {?>
     <div class="row">
         <ul class="woocommerce-error" id="errDiv">
@@ -19,6 +18,17 @@ $ipara_url = plugins_url('/', dirname(__FILE__));
     </div>
 <?php }?>
 <link rel="stylesheet" type="text/css" href="<?php echo $ipara_url ?>assets/css/ipara.css?_v=<?=time()?>">
+<style>
+    .card-js .icon{
+        display: none;
+        opacity: 0;
+        visibility: hidden;
+    }
+    .card-js .expiry, .card-js .cvc{
+        max-width: 100px;
+    }
+
+</style>
 <div class="woocommerce-notices-wrapper"><?php if($ipara_error_message) echo wc_print_notice( $ipara_error_message ,  'error' ) ;?></div>
 <div class= "row">
         <div id="ipara-form" class="col-xs-12 iparaform" >
@@ -26,28 +36,27 @@ $ipara_url = plugins_url('/', dirname(__FILE__));
             <div class="hepsi">
                 <div class="form-group active ipara">
                     <form method="POST" id="iparapostform" action="">
-                        <div class="card-wrapper" style="margin-left:5px; display: none"></div>
+                        <div class="card-wrapper" style="display: none" ></div>
                         <div class="ipara-container card-container">
-                            <h6 class="odemeform-baslik"><?php echo __('Credit Cart', 'ipara-woocommerce') ?></h6>
                             <div class="iparaname iparafull">
-                                <span class="cc-label"><?php echo __('Name on Card', 'ipara-woocommerce'); ?></span>
-                                <input type="text" class="input-text c-card card-name" type="text" required    oninvalid="this.setCustomValidity('Kart sahibinin adını yazınız.')"  oninput="setCustomValidity('')" name="card-name" id="card-name" value="<?=getFlash('card-name')?>">
+                                <span class="cc-label"><?php echo __('Kart üzerindeki isim', 'ipara-woocommerce'); ?></span>
+                            <input class="iparacard card-name" placeholder="" type="text" name="card-name" value="<?=getFlash('card-name')?>" required>
                             </div>
-                            <input value="<?php echo $orderid ?>" name="order_id" type="hidden">
                             <div class="iparacard iparaorta">
-
-                                <span class="cc-label"><?php echo __('Card Number', 'ipara-woocommerce'); ?></span>
-                                <input type="text" value="" id="iparacardnumber" class="input-text c-card cardnumber" required   oninvalid="this.setCustomValidity('Kartın üzerindeki 16 haneli numarayı giriniz.')" oninput="setCustomValidity('')" type="tel" name="number"  value="<?=getFlash('number')?>">
+                                <span class="cc-label"><?php echo __('Kart numarası', 'ipara-woocommerce'); ?></span>
+                                <input placeholder="" type="tel" id="number" name="number" class="cardnumber" value="<?=getFlash('number')?>" required>
                             </div>
                             <div class="iparaleft iparaexpry">
-                                <span class="cc-label"><?php echo __('Card Expiry', 'ipara-woocommerce'); ?></span>
-                                <input type="text" class="input-text c-date c-card"  type="tel" maxlength="7" required  oninvalid="this.setCustomValidity('Kartın son kullanma tarihini giriniz')" oninput="setCustomValidity('')" name="expiry" >
+                                <span class="cc-label"><?php echo __('Son kullanma tarihi', 'ipara-woocommerce'); ?></span>
+                                <input placeholder="Gün/YY" type="tel" class="expiry" name="expiry" required maxlength="7">
                             </div>
                             <div class="ipararight iparacvc">
-                                <span class="cc-label"><?php echo __('CVC Number', 'ipara-woocommerce'); ?></span>
-                                <input type="text" class="input-text card-cvc c-card" required  type="number"  oninvalid="this.setCustomValidity('Kartın arkasındaki 3 ya da 4 basamaklı sayıyı giriniz')" oninput="setCustomValidity('')" name="cvc" >
+                                <span class="cc-label"><?php echo __('Güvenlik Kodu', 'ipara-woocommerce'); ?></span>
+                                <input placeholder="CVC" type="number" class="cvc" name="cvc" required>
                             </div>
                         </div>
+                        <input value="<?php echo $orderid ?>" name="order_id" type="hidden">
+
                         <div class="ipara-container tekcekim-container ">
                             <div class="tekcekim">
                                 <span class="cc-label"></span>
@@ -65,46 +74,55 @@ $ipara_url = plugins_url('/', dirname(__FILE__));
         </div>
 </div>
 <script type="text/javascript">
-    var theme = "<?php echo $ipara_url ?>";
-    var taksit = "<?php echo $installments_mode ?>";
-    new Card({
-        form: document.querySelector('.hepsi'),
-        container: '.card-wrapper',
-        formSelectors: {
-            nameInput: 'input#card-name'
-        },
-    });
-    $(document).ready(function () {
-        $('body').on('change', 'select.taksit', function () {
-            $('button.iparaode.taksit').val( $(this).find('option:selected').data('total') );
-            $('button.iparaode.taksit .showtotal').html( $(this).find('option:selected').data('total') + '<?=get_woocommerce_currency_symbol()?>' );
+    jQuery(document).ready(function (){
+
+        var c = new Card({
+            form: document.querySelector('.ipara-container'),
+            container: '.card-wrapper',
+            formSelectors: {
+                nameInput: 'input.iparacard.card-name'
+            },
+
         });
-    });
 
-    if (taksit == 'on') {
-        $(document).ready(function () {
-            $("#iparacardnumber").bind('paste', function() {
-                $('#instalment-options').data('bin', '');
+
+        var taksit = "<?php echo $installments_mode ?>";
+        jQuery(document).ready(function () {
+            jQuery('body').on('change', 'select.taksit', function () {
+                jQuery('button.iparaode.taksit').val( jQuery(this).find('option:selected').data('total') );
+                jQuery('button.iparaode.taksit .showtotal').html( jQuery(this).find('option:selected').data('total') + '<?=get_woocommerce_currency_symbol()?>' );
             });
+        });
+        jQuery(".card-number").bind('paste', function() {
+            jQuery('#instalment-options').data('bin', '');
+        });
 
-            $.ajaxSetup({cache: false});
-            $('#iparacardnumber').on('keyup change', function () {
-                $('.instalment-table').hide();
-                var searchField = $('#iparacardnumber').val();
-                searchField = searchField.replace(/\s/g, '').substring(0,6);
-                    if(searchField.length < 6){
-                        $('.tekcekim-container').show();
-                        $('#instalment-options').html('');
-                        $('#instalment-options').data('bin', '');
-                        return;
-                    }
-                console.log($('#instalment-options').data('bin') + '==' + searchField);
-                if($('#instalment-options').data('bin')==searchField){
+        jQuery.ajaxSetup({cache: false});
+        if (taksit == 'on') {
+            jQuery('.cardnumber').on('keyup change', function(e) {
+                var searchField = jQuery(this).val().replace(/\s/g, '');
+                //searchField = jQuery(searchField);
+                console.log(searchField);
+                if(searchField.length >= 16){
+                    e.stopPropagation();
+                    e.preventDefault();
+                    e.returnValue = false;
+                    e.cancelBubble = true;
+                    return false;
+                }
+                searchField = searchField.substring(0,6);
+
+                if(searchField.length < 6){
+                    jQuery('.tekcekim-container').show();
+                    jQuery('#instalment-options').html('');
+                    jQuery('#instalment-options').data('bin', '');
+                    return;
+                }
+                if(jQuery('#instalment-options').data('bin')==searchField){
                     return ;
                 }
-
-                $('#instalment-options').data('bin', searchField);
-
+                jQuery('#instalment-options').data('bin', searchField);
+                console.log('Bin checking');
                 jQuery.ajax({
                     type: "POST",
                     url: "/ipara-woocommerce/wc-api/ipara/",
@@ -114,53 +132,31 @@ $ipara_url = plugins_url('/', dirname(__FILE__));
                     },
                     success: function (data) {
                         var response = JSON.parse(data);
-                        console.log(response);
+                        console.log('Bin checked');
+
                         if(response.is_available){
-                            $('.tekcekim-container').hide();
-                            $('#instalment-options').html(response.table);
+                            jQuery('.tekcekim-container').hide();
+                            jQuery('#instalment-options').html(response.table);
                         } else{
-                            $('.tekcekim-container').show();
-                            $('#instalment-options').html('');
+                            jQuery('.tekcekim-container').show();
+                            jQuery('#instalment-options').html('');
                         }
                     },
                     error: function (errorThrown) {
-                        $('.tekcekim-container').show();
-                        $('#instalment-options').html('');
+                        jQuery('.tekcekim-container').show();
+                        jQuery('#instalment-options').html('');
                         alert(errorThrown);
                     }
                 });
             });
-        });
-    }
+        }
+        jQuery('#iparapostform').on('submit', function(e){
+            if(jQuery('#number').val().replace(/\s/g, '').length !=16){
+                alert("Kart numarası 16 haneli olmalıdır")
+                e.preventDefault();
 
-    $('.c-card').bind('keypress keyup keydown focus', function (e) {
-        var ErrorInput = false;
-        if ($("input.card-name").hasClass("jp-card-invalid")) {
-            ErrorInput = true;
-            $("input.card-name").addClass("border");
-        }
-        if ($("input.cardnumber").hasClass("jp-card-invalid")) {
-            ErrorInput = true;
-            $("input.cardnumber").addClass("border");
-        }
-        if ($("input.c-date").hasClass("jp-card-invalid")) {
-            ErrorInput = true;
-            $("input.c-date").addClass("border");
-        }
-        if ($("input.card-cvc").hasClass("jp-card-invalid")) {
-            ErrorInput = true;
-            $("input.card-cvc").addClass("border");
-        }
-        if (ErrorInput === true) {
-            //$('.iparaode').attr("disabled", true);
-            //$(".iparaode").css("opacity", "0.5");
-        } else {
-            $("input.card-name").removeClass("border");
-            $("input.cardnumber").removeClass("border");
-            $("input.c-date").removeClass("border");
-            $("input.card-cvc").removeClass("border");
-            //$('.iparaode').attr("disabled", false);
-            //$(".iparaode").css("opacity", "1");
-        }
+            }
+        });
     });
+
 </script>

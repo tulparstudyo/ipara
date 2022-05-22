@@ -30,33 +30,33 @@
             <div>
                 <table id="bin-table" class="form-table">
                     <?php if($defined_bins){?>
-                    <?php foreach($defined_bins as $card=>$bin){?>
+                    <?php foreach($defined_bins as $bincode=>$bin){?>
                     <tr class="main-row" valign="top">
                         <th scope="row">
                             <label><?=$bin['name']?></label>
                             <label  class="select-card-image">
                                 <img class="card-logo" src="<?=$bin['logo']?>">&#127912;
                             </label>
-                            <input type="hidden" name="bins[<?=$card?>][logo]" value="<?=$bin['logo']?>" />
+                            <input type="hidden" name="bins[<?=$bincode?>][logo]" value="<?=$bin['logo']?>" />
                         </th>
                         <td class="forminp forminp-text">
                             <table>
                                 <tr>
                                     <td>Kart Ailesi</td>
-                                    <td><input type="text" name="bins[<?=$card?>][code]" value="<?=$card?>"></td>
+                                    <td><input type="text" name="bins[<?=$bincode?>][bincode]" value="<?=$bincode?>"></td>
                                 </tr>
                                 <tr>
                                     <td>Kart Adı</td>
-                                    <td><input type="text" name="bins[<?=$card?>][name]" value="<?=$bin['name']?>"></td>
+                                    <td><input type="text" name="bins[<?=$bincode?>][name]" value="<?=$bin['name']?>"></td>
                                 </tr>
                                 <tr>
                                     <td>Banka</td>
-                                    <td><input type="text" name="bins[<?=$card?>][bank]" "type="text" style="" value="<?=$bin['bank']?>" class="" placeholder=""></td>
+                                    <td><input type="text" name="bins[<?=$bincode?>][bank]" "type="text" style="" value="<?=$bin['bank']?>" class="" placeholder=""></td>
                                 </tr>
                                 <tr>
                                     <td>Taksit İmkanı</td>
                                     <td>
-                                        <select name="bins[<?=$card?>][installments]">
+                                        <select name="bins[<?=$bincode?>][installments]">
                                             <?php if($bin['installments']){?>
                                                 <option value="1" selected>Evet</option>
                                                 <option value="0">Hayır</option>
@@ -97,15 +97,15 @@
                 <table>
                     <tr>
                         <td>Kart Ailesi</td>
-                        <td><input type="text" name="new[{i}][code]" value=""></td>
+                        <td><input type="text" name="new[{i}][bincode]" value="{bincode}"></td>
                     </tr>
                     <tr>
                         <td>Kart Adı</td>
-                        <td><input type="text" name="new[{i}][name]" value=""></td>
+                        <td><input type="text" name="new[{i}][name]" value="{name}"></td>
                     </tr>
                     <tr>
                         <td>Banka</td>
-                        <td><input type="text" name="new[{i}][bank]" "type="text" style="" value="" class="" placeholder=""></td>
+                        <td><input type="text" name="new[{i}][bank]" type="text" style="" value="{bank}" class="" placeholder=""></td>
                     </tr>
                     <tr>
                         <td>Taksit İmkanı</td>
@@ -123,6 +123,19 @@
             </td>
         </tr>
     </template>
+    <hr>
+    <form method="post"  action="" enctype="multipart/form-data">
+        <table class="form-table">
+            <tr><td>Bin Sorgula</td><td><input type="text" id="BinNumber" name="BinNumber" value="<?=$BinNumber?>"> <button id="sorgula" name="sorgula" class="button-primary woocommerce-save-button" type="submit" value="1">Sor ve Ekle</button></td></tr>
+            <tr><td></td>
+                <td>
+                    <pre>
+                        <?php print_r($ipara_bininfo);?>
+                    </pre>
+                </td>
+            </tr>
+        </table>
+    </form>
     <script type="text/javascript">
         var bin_template = jQuery('#template-bin').html();
         var i = 1;
@@ -133,19 +146,24 @@
             jQuery('#bin-table').append(bin_template.replaceAll('{i}', i++));
 
         });
+        jQuery('body').on('click', '#sorgula', function(e){
+            e.preventDefault();
+            var data = {
+                'action': 'ipara_wooturk_action',
+                'BinNumber': jQuery('#BinNumber').val()      // We pass php values differently!
+            };
+            jQuery.post(ajaxurl, data, function(response) {
+                if(response.result){
+                    var newtitem = bin_template.replaceAll('{i}', i++);
+                    newtitem = newtitem.replaceAll('{bincode}', response.BinNumber);
+                    newtitem = newtitem.replaceAll('{name}', response.cardFamilyName);
+                    newtitem = newtitem.replaceAll('{bank}', response.bankName);
+                    //supportsInstallment
+                    jQuery('#bin-table').append(newtitem);
+                }
+            });
+            return false;
+        });
     </script>
-    <hr>
-    <form method="post"  action="" enctype="multipart/form-data">
-        <table class="form-table">
-            <tr><td>Bin Sorgula</td><td><input type="text" name="BinNumber" value="<?=$BinNumber?>"> <button name="sorgula" class="button-primary woocommerce-save-button" type="submit" value="1">Sor</button></td></tr>
-            <tr><td></td>
-                <td>
-                    <pre>
-                        <?php print_r($ipara_bininfo);?>
-                    </pre>
-                </td>
-            </tr>
-        </table>
-    </form>
 
 </div>
